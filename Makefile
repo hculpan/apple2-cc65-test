@@ -1,6 +1,6 @@
 PLATFORM=apple2enh
 PGM=adder
-AC=java -jar c:/users/usucuha/bin/AppleCommander-1.3.5.jar
+AC=java -jar AppleCommander-1.3.5.13.jar
 
 CC65_HOME=c:/users/usucuha/retrocomputing/cc65/bin
 
