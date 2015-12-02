@@ -5,7 +5,7 @@ AC=java -jar AppleCommander-1.3.5.13.jar
 CC65_HOME=c:/users/usucuha/retrocomputing/cc65/bin
 
 $(PGM): $(PGM).c a2e.hi.o $(PGM).po
-	$(CC65_HOME)/cl65 -t $(PLATFORM) --lib a2e.hi.o -O $(PGM).c
+	$(CC65_HOME)/cl65 -t $(PLATFORM) --lib a2e.hi.o -O $(PGM).c 
 	$(AC) -d $(PGM).po $(PGM)
 	$(AC) -cc65 $(PGM).po $(PGM) BIN < $(PGM)
 
