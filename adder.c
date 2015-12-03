@@ -1,61 +1,128 @@
 #include <apple2enh.h>
-#include <tgi.h>
 #include <conio.h>
+#include <peekpoke.h>
+
+typedef unsigned char byte;
 
 #define BLACK         0
 #define GREEN         1
 #define VIOLET        2
 #define WHITE         3
 
-/* Driver stuff */
-static unsigned MaxX;
-static unsigned MaxY;
-static unsigned AspectRatio;
+#define MODE_TEXT     0
+#define MODE_HIRES    1
 
-extern char a2e_hi;
+unsigned MaxX = 280;
+unsigned MaxY = 192;
 
-static void doStuff(void);
+byte active_page = 1;
+byte draw_page = 1;
+
+unsigned int HB[]={
+  0x2000, 0x0400, 0x0800, 0x0C00, 0x0000, 0x1400, 0x1800, 0x1C00,
+  0x2080, 0x2480, 0x2880, 0x2C80, 0x3080, 0x3480, 0x3880, 0x3C80,
+  0x2100, 0x2500, 0x2900, 0x2D00, 0x3100, 0x3500, 0x3900, 0x3D00,
+  0x2180, 0x2580, 0x2980, 0x2D80, 0x3180, 0x3580, 0x3980, 0x3D80,
+  0x2200, 0x2600, 0x2A00, 0x2E00, 0x3200, 0x3600, 0x3A00, 0x3E00,
+  0x2280, 0x2680, 0x2A80, 0x2E80, 0x3280, 0x3680, 0x3A80, 0x3E80,
+  0x2300, 0x2700, 0x2B00, 0x2F00, 0x3300, 0x3700, 0x3B00, 0x3F00,
+  0x2380, 0x2780, 0x2B80, 0x2F80, 0x3380, 0x3780, 0x3B80, 0x3F80,
+  0x2028, 0x2428, 0x2828, 0x2C28, 0x3028, 0x3428, 0x3828, 0x3C28,
+  0x20A8, 0x24A8, 0x28A8, 0x2CA8, 0x30A8, 0x34A8, 0x38A8, 0x3CA8,
+  0x2128, 0x2528, 0x2928, 0x2D28, 0x3128, 0x3528, 0x3928, 0x3D28,
+  0x21A8, 0x25A8, 0x29A8, 0x2DA8, 0x31A8, 0x35A8, 0x39A8, 0x3DA8,
+  0x2228, 0x2628, 0x2A28, 0x2E28, 0x3228, 0x3628, 0x3A28, 0x3E28,
+  0x22A8, 0x26A8, 0x2AA8, 0x2EA8, 0x32A8, 0x36A8, 0x3AA8, 0x3EA8,
+  0x2328, 0x2728, 0x2B28, 0x2F28, 0x3328, 0x3728, 0x3B28, 0x3F28,
+  0x23A8, 0x27A8, 0x2BA8, 0x2FA8, 0x33A8, 0x37A8, 0x3BA8, 0x3FA8,
+  0x2050, 0x2450, 0x2850, 0x2C50, 0x3050, 0x3450, 0x3850, 0x3C50,
+  0x20D0, 0x24D0, 0x28D0, 0x2CD0, 0x30D0, 0x34D0, 0x38D0, 0x3CD0,
+  0x2150, 0x2550, 0x2950, 0x2D50, 0x3150, 0x3550, 0x3950, 0x3D50,
+  0x21D0, 0x25D0, 0x29D0, 0x2DD0, 0x31D0, 0x35D0, 0x39D0, 0x3DD0,
+  0x2250, 0x2650, 0x2A50, 0x2E50, 0x3250, 0x3650, 0x3A50, 0x3E50,
+  0x22D0, 0x26D0, 0x2AD0, 0x2ED0, 0x32D0, 0x36D0, 0x3AD0, 0x3ED0,
+  0x2350, 0x2750, 0x2B50, 0x2F50, 0x3350, 0x3750, 0x3B50, 0x3F50,
+  0x23D0, 0x27D0, 0x2BD0, 0x2FD0, 0x33D0, 0x37D0, 0x3BD0, 0x3FD0
+};
+
+//void doStuff(void);
+void initGraphics(byte mode);
+void drawPixel(int x, int y, byte color);
+void drawHLine(int x1, int x2, int y, byte color);
 
 int main() {
-//  tgi_load_driver(tgi_stddrv);
-  tgi_install(&a2e_hi);
+  int y;
 
-  tgi_init();
-  tgi_clear();
+  initGraphics(MODE_HIRES);
 
-  /* Get stuff from the driver */
-  MaxX = tgi_getmaxx() ;
-  MaxY = tgi_getmaxy();
-  AspectRatio = tgi_getaspectratio ();
+  for (y = 0; y < MaxY; y++) {
+    drawHLine(0, MaxX - 1, y, BLACK);
+  }
 
-  doStuff();
+  while (!kbhit()) {};
 
-  tgi_uninstall();
+  initGraphics(MODE_TEXT);
 
   return 0;
 }
 
-static void doStuff (void) {
-  int x, y;
+void initGraphics(byte mode) {
+  switch (mode) {
+    case 1: // HIRES, page 1
+      POKE(0xC057, 0); // HI-RES ON
+      POKE(0xC050, 0); // TEXT OFF
+      POKE(0xC054, 0); // PAGE 2 OFF
+      POKE(0xC05E, 0); // AN3
+      POKE(0xC052, 0); // MIXED OFF
+      break;
+    case 0: // TEXT
+    default:
+      POKE(0xc051, 0); // text
+      POKE(0xc054, 0); // page 1
+  }
+}
 
-  tgi_setviewpage(0);
-  tgi_setdrawpage(1);
-  tgi_clear();
+void drawHLine(int x1, int x2, int y, byte color) {
+  int x;
 
-  for (x = 0; x <= MaxX; x++) {
-    for (y = 0; y <= 10; y++) {
-      if (x % 2 == 0) {
-        tgi_setcolor(VIOLET & 0x55);
-      } else {
-        tgi_setcolor(GREEN & 0x55);
-      }
-      tgi_setpixel(x, y);
-    }
+  if (x2 < x1) {
+    x = x1;
+    x1 = x2;
+    x2 = x;
   }
 
-  tgi_setviewpage(1);
-
-  while (!kbhit()) {
-
+  for (x = x1; x < x2; x++) {
+    drawPixel(x, y, color);
   }
+}
+
+void drawPixel(int x, int y, byte color) {
+  unsigned int address = HB[y];
+  byte c[2];
+
+  if (draw_page == 2) {
+    address += 0x2000;
+  }
+  address += (int)(x / 7);
+
+  switch(color) {
+    case 8 : break;                      // inverse video box
+    case 7 : c[0]='\x7f'; c[1]='\x7f';   // white  ... everything
+             break;
+    case 6 : c[0]='\x2a'; c[1]='\x55';   // green
+             break;
+    case 5 : c[0]='\x55'; c[1]='\x2a';   // purple
+             break;
+    case 4:  c[0]='\x00';c[1]='\x00';    // black  ... nothing
+             break;
+    case 3 : c[0]='\xff'; c[1]='\xff';   // white  ... everything
+             break;
+    case 2 : c[0]='\xaa'; c[1]='\xd5';   // orange
+             break;
+    case 1 : c[0]='\xd5'; c[1]='\xaa';   // blue
+             break;
+    default: c[0]='\x80';c[1]='\x80';    // black  ... nothing
+  }
+
+  POKE(address, c[0]);
 }
